@@ -12,11 +12,22 @@ export async function apiRequest(endpoint, options = {}) {
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  } catch (fetchErr) {
+    const msg = fetchErr.message || 'Network error';
+    throw new Error(
+      msg.includes('fetch') || msg.includes('NetworkError')
+        ? 'Cannot reach server. Make sure the backend is running on http://localhost:5000'
+        : msg
+    );
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const err = new Error(data.message || 'Request failed');
+    const err = new Error(data.message || `Request failed (${res.status})`);
     err.status = res.status;
     err.data = data;
     throw err;

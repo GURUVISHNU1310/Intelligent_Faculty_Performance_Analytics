@@ -1,9 +1,23 @@
 const Performance = require('../models/Performance');
+const Feedback = require('../models/Feedback');
+const mongoose = require('mongoose');
 const { calculatePerformanceScore } = require('../utils/calculatePerformance');
+
+async function getTeachingScoreFromStudentFeedback(facultyId) {
+  const result = await Feedback.aggregate([
+    { $match: { facultyId: typeof facultyId === 'string' ? new mongoose.Types.ObjectId(facultyId) : facultyId } },
+    { $group: { _id: '$facultyId', avgScore: { $avg: '$score' }, count: { $sum: 1 } } },
+  ]);
+  if (!result.length) return { teachingScore: 0, count: 0 };
+  return { teachingScore: Math.round(result[0].avgScore), count: result[0].count };
+}
 
 const addPerformance = async (req, res) => {
   try {
-    const { facultyId, teachingScore, studentFeedback, attendance, researchPapers, adminWork } = req.body;
+    const { facultyId, attendance, researchPapers, adminWork } = req.body;
+    // Teaching score and student feedback both come from students' feedback (average).
+    const { teachingScore } = await getTeachingScoreFromStudentFeedback(facultyId);
+    const studentFeedback = teachingScore;
     const { totalScore, performanceLevel } = calculatePerformanceScore(
       teachingScore, studentFeedback, attendance, researchPapers, adminWork
     );
@@ -37,19 +51,23 @@ const getPerformanceByFaculty = async (req, res) => {
 
 const updatePerformance = async (req, res) => {
   try {
-    const { teachingScore, studentFeedback, attendance, researchPapers, adminWork } = req.body;
     const existing = await Performance.findById(req.params.id);
     if (!existing) return res.status(404).json({ message: 'Performance record not found.' });
+    const { attendance, researchPapers, adminWork } = req.body;
+
+    // Teaching score and student feedback both from students' feedback (average).
+    const { teachingScore } = await getTeachingScoreFromStudentFeedback(existing.facultyId);
+    const studentFeedback = teachingScore;
     const { totalScore, performanceLevel } = calculatePerformanceScore(
-      teachingScore ?? existing.teachingScore,
-      studentFeedback ?? existing.studentFeedback,
+      teachingScore,
+      studentFeedback,
       attendance ?? existing.attendance,
       researchPapers ?? existing.researchPapers,
       adminWork ?? existing.adminWork
     );
     const performance = await Performance.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, totalScore, performanceLevel },
+      { ...req.body, teachingScore, studentFeedback, totalScore, performanceLevel },
       { new: true, runValidators: true }
     ).populate('facultyId');
     res.json(performance);

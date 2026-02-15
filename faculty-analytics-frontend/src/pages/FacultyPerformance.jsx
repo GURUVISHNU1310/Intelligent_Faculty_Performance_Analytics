@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchFaculty, fetchFacultyById } from '../services/facultyService';
 import { fetchPerformance, addPerformance } from '../services/performanceService';
+import { getFacultyFeedbackSummary } from '../services/feedbackService';
 import PerformanceChart, { showTeachingChart } from '../charts/PerformanceChart';
 import AttendanceChart, { showAttendanceChart } from '../charts/AttendanceChart';
 import ResearchChart, { showResearchChart } from '../charts/ResearchChart';
@@ -14,25 +15,30 @@ function FacultyPerformanceWithId() {
   const canAdd = user?.role === 'ADMIN' || user?.role === 'HOD';
   const [faculty, setFaculty] = useState(null);
   const [performances, setPerformances] = useState([]);
+  const [feedbackSummary, setFeedbackSummary] = useState({ averageScore: 0, count: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
-    teachingScore: 0,
-    studentFeedback: 0,
     attendance: 0,
     researchPapers: 0,
     adminWork: 0,
   });
 
-  useEffect(() => {
-    Promise.all([fetchFacultyById(id), fetchPerformance(id)])
-      .then(([facultyRes, perfRes]) => {
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([fetchFacultyById(id), fetchPerformance(id), getFacultyFeedbackSummary(id)])
+      .then(([facultyRes, perfRes, summaryRes]) => {
         setFaculty(facultyRes);
         setPerformances(Array.isArray(perfRes) ? perfRes : []);
+        setFeedbackSummary({ averageScore: summaryRes?.averageScore ?? 0, count: summaryRes?.count ?? 0 });
       })
       .catch((err) => setError(err.message || 'Failed to load'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, [id]);
 
   const handleChange = (e) => {
@@ -44,10 +50,11 @@ function FacultyPerformanceWithId() {
     e.preventDefault();
     try {
       await addPerformance({ facultyId: id, ...form });
-      setForm({ teachingScore: 0, studentFeedback: 0, attendance: 0, researchPapers: 0, adminWork: 0 });
+      setForm({ attendance: 0, researchPapers: 0, adminWork: 0 });
       setShowForm(false);
-      const perfRes = await fetchPerformance(id);
+      const [perfRes, summaryRes] = await Promise.all([fetchPerformance(id), getFacultyFeedbackSummary(id)]);
       setPerformances(Array.isArray(perfRes) ? perfRes : []);
+      setFeedbackSummary({ averageScore: summaryRes?.averageScore ?? 0, count: summaryRes?.count ?? 0 });
     } catch (err) {
       setError(err.message);
     }
@@ -58,11 +65,16 @@ function FacultyPerformanceWithId() {
   if (!faculty) return null;
 
   const latest = performances[0];
+  const liveTeaching = feedbackSummary.averageScore;
   const labels = performances.slice(0, 10).map((_, i) => `Record ${performances.length - i}`);
-  const teachingData = showTeachingChart(labels, performances.slice(0, 10).map((p) => p.teachingScore).reverse());
+  // Teaching chart: only average from student feedback (no Record 1, Current, etc.)
+  const teachingData = showTeachingChart(
+    ['Teaching Score (avg)'],
+    [liveTeaching]
+  );
   const attendanceData = showAttendanceChart(
     ['Teaching', 'Feedback', 'Attendance', 'Research', 'Admin'],
-    latest ? [latest.teachingScore, latest.studentFeedback, latest.attendance, latest.researchPapers, latest.adminWork] : []
+    latest ? [liveTeaching, liveTeaching, latest.attendance, latest.researchPapers, latest.adminWork] : [liveTeaching, liveTeaching, 0, 0, 0]
   );
   const researchData = showResearchChart(labels, performances.slice(0, 10).map((p) => p.researchPapers).reverse());
   const overallData = showOverallPerformanceChart(labels, performances.slice(0, 10).map((p) => p.totalScore).reverse());
@@ -74,6 +86,20 @@ function FacultyPerformanceWithId() {
       </div>
       <h1 style={{ marginBottom: '0.5rem' }}>{faculty.name}</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{faculty.department} · {faculty.designation}</p>
+      <div className="card" style={{ padding: '0.75rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Teaching score & student feedback are auto-calculated from students' feedback
+          </p>
+          <p style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent)' }}>
+            {feedbackSummary.averageScore} / 100
+            <span style={{ fontSize: '0.9rem', fontWeight: 400, color: 'var(--text-muted)' }}> ({feedbackSummary.count} feedbacks)</span>
+          </p>
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={loadData} style={{ padding: '0.4rem 0.8rem' }}>
+          Refresh
+        </button>
+      </div>
 
       {latest && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -95,7 +121,7 @@ function FacultyPerformanceWithId() {
           </button>
           {showForm && (
             <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
-              {['teachingScore', 'studentFeedback', 'attendance', 'researchPapers', 'adminWork'].map((key) => (
+              {['attendance', 'researchPapers', 'adminWork'].map((key) => (
                 <div className="form-group" key={key}>
                   <label>{key.replace(/([A-Z])/g, ' $1').trim()}</label>
                   <input type="number" min="0" max="100" name={key} value={form[key]} onChange={handleChange} />

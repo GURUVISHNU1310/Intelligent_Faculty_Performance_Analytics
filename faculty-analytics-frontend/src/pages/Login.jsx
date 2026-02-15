@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { login as apiLogin } from '../services/authService';
 
@@ -22,7 +22,7 @@ export default function Login() {
       login(data.token, data.user);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed.');
+      setError(err?.message || 'Login failed.');
     } finally {
       setLoading(false);
     }
@@ -60,6 +60,9 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+        <p style={styles.footer}>
+          Don't have an account? <Link to="/register">Register</Link>
+        </p>
       </div>
     </div>
   );
@@ -78,4 +81,5 @@ const styles = {
   subtitle: { color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.95rem' },
   form: { marginTop: '0.5rem' },
   btn: { width: '100%', marginTop: '0.5rem' },
+  footer: { marginTop: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' },
 };

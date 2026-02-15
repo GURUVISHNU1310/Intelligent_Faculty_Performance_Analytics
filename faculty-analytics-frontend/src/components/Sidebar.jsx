@@ -1,15 +1,21 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const links = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/faculty', label: 'Faculty List' },
-  { to: '/faculty/add', label: 'Add Faculty' },
-  { to: '/performance', label: 'Performance' },
-  { to: '/reports', label: 'Reports' },
-  { to: '/profile', label: 'Profile' },
+// Admin & HOD: full. Faculty: view faculty/performance. Student: own dashboard + profile only (give feedback on dashboard).
+const allLinks = [
+  { to: '/', label: 'Dashboard', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
+  { to: '/faculty', label: 'Faculty List', roles: ['ADMIN', 'HOD', 'FACULTY'] },
+  { to: '/faculty/add', label: 'Add Faculty', roles: ['ADMIN', 'HOD'] },
+  { to: '/performance', label: 'Performance', roles: ['ADMIN', 'HOD', 'FACULTY'] },
+  { to: '/reports', label: 'Reports', roles: ['ADMIN', 'HOD', 'FACULTY'] },
+  { to: '/profile', label: 'Profile', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
 ];
 
 export default function Sidebar() {
+  const { user } = useAuth();
+  const role = user?.role || '';
+  const links = allLinks.filter((link) => link.roles.includes(role));
+
   return (
     <aside style={styles.aside}>
       <ul style={styles.ul}>

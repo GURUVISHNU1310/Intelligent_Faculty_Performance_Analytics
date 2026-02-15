@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllReports } from '../services/performanceService';
+import { getAllFeedbackSummaries } from '../services/feedbackService';
 import PerformanceChart, { showTeachingChart } from '../charts/PerformanceChart';
 import AttendanceChart, { showAttendanceChart } from '../charts/AttendanceChart';
 import ResearchChart, { showResearchChart } from '../charts/ResearchChart';
@@ -8,15 +9,24 @@ import OverallPerformanceChart, { showOverallPerformanceChart } from '../charts/
 
 export default function Reports() {
   const [reports, setReports] = useState([]);
+  const [feedbackSummaries, setFeedbackSummaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedFacultyId, setSelectedFacultyId] = useState(null);
 
-  useEffect(() => {
-    getAllReports()
-      .then((data) => setReports(Array.isArray(data) ? data : []))
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([getAllReports(), getAllFeedbackSummaries()])
+      .then(([reportsData, feedbackData]) => {
+        setReports(Array.isArray(reportsData) ? reportsData : []);
+        setFeedbackSummaries(Array.isArray(feedbackData) ? feedbackData : []);
+      })
       .catch((err) => setError(err.message || 'Failed to load reports'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   if (loading) return <p>Loading reports...</p>;
@@ -31,18 +41,28 @@ export default function Reports() {
   const selectedLatest = selectedFacultyId ? latestByFaculty[selectedFacultyId] : null;
   const facultyReports = selectedFacultyId ? reports.filter((r) => (r.facultyId?._id || r.facultyId) === selectedFacultyId) : [];
 
-  const teachingData = showTeachingChart(
-    latestList.map((r) => r.facultyId?.name || 'Faculty'),
-    latestList.map((r) => r.teachingScore)
-  );
+  const feedbackByFaculty = feedbackSummaries.reduce((acc, s) => {
+    acc[String(s.facultyId?._id || s.facultyId)] = s.averageScore;
+    return acc;
+  }, {});
+
+  // Teaching score = live from student feedback (use feedback summaries when no performance records)
+  const teachingLabels = latestList.length
+    ? latestList.map((r) => r.facultyId?.name || 'Faculty')
+    : feedbackSummaries.map((s) => s.facultyName || 'Faculty');
+  const teachingScores = latestList.length
+    ? latestList.map((r) => feedbackByFaculty[String(r.facultyId?._id || r.facultyId)] ?? 0)
+    : feedbackSummaries.map((s) => s.averageScore ?? 0);
+  const teachingData = showTeachingChart(teachingLabels, teachingScores);
   const overallData = showOverallPerformanceChart(
     latestList.map((r) => r.facultyId?.name || 'Faculty'),
     latestList.map((r) => r.totalScore)
   );
+  const liveTeaching = selectedFacultyId ? (feedbackByFaculty[String(selectedFacultyId)] ?? 0) : 0;
   const attendanceData = selectedLatest
     ? showAttendanceChart(
         ['Teaching', 'Feedback', 'Attendance', 'Research', 'Admin'],
-        [selectedLatest.teachingScore, selectedLatest.studentFeedback, selectedLatest.attendance, selectedLatest.researchPapers, selectedLatest.adminWork]
+        [liveTeaching, liveTeaching, selectedLatest.attendance, selectedLatest.researchPapers, selectedLatest.adminWork]
       )
     : { labels: [], datasets: [{ data: [] }] };
   const researchData = showResearchChart(
@@ -52,10 +72,13 @@ export default function Reports() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '1rem' }}>Reports</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h1>Reports</h1>
+        <button type="button" className="btn btn-secondary" onClick={loadData}>Refresh</button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '0.75rem' }}>Teaching Score by Faculty</h3>
+          <h3 style={{ marginBottom: '0.75rem' }}>Teaching Score by Faculty (from student feedback)</h3>
           <PerformanceChart data={teachingData} />
         </div>
         <div className="card">

@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleRoute from './components/RoleRoute';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import FacultyList from './pages/FacultyList';
 import AddFaculty from './pages/AddFaculty';
@@ -27,6 +29,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route
         path="/"
         element={
@@ -47,7 +50,9 @@ export default function App() {
         path="/faculty/add"
         element={
           <ProtectedRoute>
-            <Layout><AddFaculty /></Layout>
+            <RoleRoute allowedRoles={['ADMIN', 'HOD']}>
+              <Layout><AddFaculty /></Layout>
+            </RoleRoute>
           </ProtectedRoute>
         }
       />
@@ -55,7 +60,9 @@ export default function App() {
         path="/faculty/edit/:id"
         element={
           <ProtectedRoute>
-            <Layout><EditFaculty /></Layout>
+            <RoleRoute allowedRoles={['ADMIN', 'HOD']}>
+              <Layout><EditFaculty /></Layout>
+            </RoleRoute>
           </ProtectedRoute>
         }
       />
@@ -79,7 +86,9 @@ export default function App() {
         path="/reports"
         element={
           <ProtectedRoute>
-            <Layout><Reports /></Layout>
+            <RoleRoute allowedRoles={['ADMIN', 'HOD', 'FACULTY']}>
+              <Layout><Reports /></Layout>
+            </RoleRoute>
           </ProtectedRoute>
         }
       />

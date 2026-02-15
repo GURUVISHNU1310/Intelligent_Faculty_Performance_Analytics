@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 
 connectDB();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

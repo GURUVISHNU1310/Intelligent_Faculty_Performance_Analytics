@@ -1,24 +1,39 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { fetchFaculty } from '../services/facultyService';
 import { getAllReports } from '../services/performanceService';
+import { getAllFeedbackSummaries } from '../services/feedbackService';
 import PerformanceChart, { showTeachingChart } from '../charts/PerformanceChart';
 import OverallPerformanceChart, { showOverallPerformanceChart } from '../charts/OverallPerformanceChart';
+import StudentDashboard from './StudentDashboard';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [faculty, setFaculty] = useState([]);
   const [reports, setReports] = useState([]);
+  const [feedbackSummaries, setFeedbackSummaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    Promise.all([fetchFaculty(), getAllReports()])
-      .then(([facultyRes, reportsRes]) => {
+  if (user?.role === 'STUDENT') {
+    return <StudentDashboard />;
+  }
+
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([fetchFaculty(), getAllReports(), getAllFeedbackSummaries()])
+      .then(([facultyRes, reportsRes, feedbackRes]) => {
         setFaculty(facultyRes);
         setReports(Array.isArray(reportsRes) ? reportsRes : []);
+        setFeedbackSummaries(Array.isArray(feedbackRes) ? feedbackRes : []);
       })
       .catch((err) => setError(err.message || 'Failed to load data'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   if (loading) return <p>Loading dashboard...</p>;
@@ -30,11 +45,18 @@ export default function Dashboard() {
     return acc;
   }, {});
   const latest = Object.values(latestByFaculty).slice(0, 10);
+  const feedbackByFaculty = feedbackSummaries.reduce((acc, s) => {
+    const id = s.facultyId?._id || s.facultyId;
+    acc[String(id)] = s.averageScore;
+    return acc;
+  }, {});
 
-  const teachingData = showTeachingChart(
-    latest.map((r) => r.facultyId?.name || 'Faculty'),
-    latest.map((r) => r.teachingScore)
-  );
+  // Teaching score = live from student feedback (not stored performance)
+  const teachingLabels = latest.length ? latest.map((r) => r.facultyId?.name || 'Faculty') : faculty.map((f) => f.name);
+  const teachingScores = latest.length
+    ? latest.map((r) => feedbackByFaculty[String(r.facultyId?._id || r.facultyId)] ?? 0)
+    : faculty.map((f) => feedbackByFaculty[String(f._id)] ?? 0);
+  const teachingData = showTeachingChart(teachingLabels, teachingScores);
   const overallData = showOverallPerformanceChart(
     latest.map((r) => r.facultyId?.name || 'Faculty'),
     latest.map((r) => r.totalScore)
@@ -42,7 +64,10 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '1rem' }}>Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h1>Dashboard</h1>
+        <button type="button" className="btn btn-secondary" onClick={loadData}>Refresh</button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
         <div className="card">
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Total Faculty</p>
@@ -55,7 +80,7 @@ export default function Dashboard() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>Teaching Score Overview</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Teaching Score (from student feedback)</h3>
           <PerformanceChart data={teachingData} />
         </div>
         <div className="card">
@@ -66,7 +91,9 @@ export default function Dashboard() {
       <div className="card" style={{ marginTop: '1rem' }}>
         <h3 style={{ marginBottom: '0.75rem' }}>Quick Actions</h3>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Link to="/faculty/add" className="btn btn-primary">Add Faculty</Link>
+          {(user?.role === 'ADMIN' || user?.role === 'HOD') && (
+            <Link to="/faculty/add" className="btn btn-primary">Add Faculty</Link>
+          )}
           <Link to="/faculty" className="btn btn-secondary">View Faculty</Link>
           <Link to="/reports" className="btn btn-secondary">View Reports</Link>
         </div>
