@@ -119,11 +119,7 @@ export default function Register() {
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select>
-            <p style={styles.roleHint}>
-              {role === 'ADMIN' && 'Full access: manage faculty, performance, and reports.'}
-              {role === 'FACULTY' && 'Only if admin has added you as faculty first. You cannot add faculty.'}
-              {role === 'STUDENT' && 'View dashboard and give feedback only.'}
-            </p>
+            
           </div>
           {error && <p className="error-msg">{error}</p>}
           <button type="submit" className="btn btn-primary" style={styles.btn} disabled={loading}>
