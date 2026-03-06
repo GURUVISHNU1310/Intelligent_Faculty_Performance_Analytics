@@ -17,7 +17,7 @@ export function showAttendanceChart(labels, attendanceValues) {
     datasets: [
       {
         data: attendanceValues,
-        backgroundColor: ['#38bdf8', '#22c55e', '#eab308', '#ef4444'],
+        backgroundColor: ['#38bdf8', '#22c55e', '#eab308', '#ef4444','#a855f7'],
         borderWidth: 0,
       },
     ],

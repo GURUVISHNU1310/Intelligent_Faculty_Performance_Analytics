@@ -15,7 +15,7 @@ export default function Sidebar() {
   const { user } = useAuth();
   const role = user?.role || '';
   const links = allLinks.filter((link) => link.roles.includes(role));
-
+  
   return (
     <aside style={styles.aside}>
       <ul style={styles.ul}>
