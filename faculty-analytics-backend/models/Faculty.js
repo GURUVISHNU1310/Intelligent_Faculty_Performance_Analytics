@@ -6,6 +6,31 @@ const facultySchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  profilePhoto: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  facultyId: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  dateOfBirth: {
+    type: Date,
+    default: null,
+  },
+  gender: {
+    type: String,
+    trim: true,
+    enum: ['Male', 'Female', 'Other', ''],
+    default: '',
+  },
+  contactNumber: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   email: {
     type: String,
     required: true,
@@ -13,15 +38,24 @@ const facultySchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
-  department: {
+  address: {
     type: String,
-    required: true,
     trim: true,
+    default: '',
   },
   designation: {
     type: String,
     required: true,
     trim: true,
+  },
+  department: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  joiningDate: {
+    type: Date,
+    default: null,
   },
   experience: {
     type: Number,

@@ -43,6 +43,7 @@ export default function FacultyList() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Faculty ID</th>
                 <th>Email</th>
                 <th>Department</th>
                 <th>Designation</th>
@@ -56,6 +57,7 @@ export default function FacultyList() {
                   <td>
                     <Link to={`/faculty/performance/${f._id}`}>{f.name}</Link>
                   </td>
+                  <td>{f.facultyId || '—'}</td>
                   <td>{f.email}</td>
                   <td>{f.department}</td>
                   <td>{f.designation}</td>

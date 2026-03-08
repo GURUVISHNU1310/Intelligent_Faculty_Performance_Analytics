@@ -7,6 +7,7 @@ const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
   { value: 'FACULTY', label: 'Faculty' },
   { value: 'STUDENT', label: 'Student' },
+  { value: 'HOD', label: 'HOD' },
 ];
 
 export default function Register() {
@@ -19,6 +20,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const needsFacultyEmail = role === 'FACULTY' || role === 'HOD';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,17 +33,17 @@ export default function Register() {
       setError('Passwords do not match.');
       return;
     }
-    if (role === 'FACULTY' && !facultyEmail.trim()) {
-      setError('Enter the faculty email your admin added for you.');
+    if (needsFacultyEmail && !facultyEmail.trim()) {
+      setError('Enter the email your admin added for you.');
       return;
     }
     setLoading(true);
     try {
       const data = await apiRegister(
-        role === 'FACULTY' ? facultyEmail.trim() : username,
+        needsFacultyEmail ? facultyEmail.trim() : username,
         password,
         role,
-        role === 'FACULTY' ? facultyEmail.trim() : null
+        needsFacultyEmail ? facultyEmail.trim() : null
       );
       login(data.token, data.user);
       navigate('/', { replace: true });
@@ -58,32 +60,32 @@ export default function Register() {
         <h1 style={styles.title}>Faculty Performance Analytics</h1>
         <p style={styles.subtitle}>Create an account</p>
         <form onSubmit={handleSubmit} style={styles.form}>
-          {role !== 'FACULTY' && (
+          {!needsFacultyEmail && (
             <div className="form-group">
               <label>Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required={role !== 'FACULTY'}
-                autoFocus={role !== 'FACULTY'}
+                required={!needsFacultyEmail}
+                autoFocus={!needsFacultyEmail}
                 placeholder="Choose a username"
               />
             </div>
           )}
-          {role === 'FACULTY' && (
+          {needsFacultyEmail && (
             <div className="form-group">
-              <label>Faculty email</label>
+              <label>{role === 'HOD' ? 'HOD email' : 'Faculty email'}</label>
               <input
                 type="email"
                 value={facultyEmail}
                 onChange={(e) => setFacultyEmail(e.target.value)}
                 required
-                autoFocus={role === 'FACULTY'}
+                autoFocus={needsFacultyEmail}
                 placeholder="Email your admin added for you"
               />
               <p style={styles.roleHint}>
-                You can only register if admin has already added you as faculty with this email.
+                You can only register if admin has already added you with this email.
               </p>
             </div>
           )}

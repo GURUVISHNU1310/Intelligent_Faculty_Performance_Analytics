@@ -31,6 +31,16 @@ const getFacultyById = async (req, res) => {
   }
 };
 
+const getMyFaculty = async (req, res) => {
+  try {
+    const faculty = await Faculty.findOne({ userId: req.user._id });
+    if (!faculty) return res.status(404).json({ message: 'Faculty profile not found.' });
+    res.json(faculty);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Server error.' });
+  }
+};
+
 const updateFaculty = async (req, res) => {
   try {
     const faculty = await Faculty.findByIdAndUpdate(req.params.id, req.body, {
@@ -58,6 +68,7 @@ module.exports = {
   addFaculty,
   getAllFaculty,
   getFacultyById,
+  getMyFaculty,
   updateFaculty,
   deleteFaculty,
 };

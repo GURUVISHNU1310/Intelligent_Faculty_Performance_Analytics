@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const allLinks = [
   { to: '/', label: 'Dashboard', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
   { to: '/faculty', label: 'Faculty List', roles: ['ADMIN', 'HOD', 'FACULTY'] },
-  { to: '/faculty/add', label: 'Add Faculty', roles: ['ADMIN', 'HOD'] },
+  { to: '/faculty/add', label: 'Add Faculty', roles: [ 'HOD'] },
   { to: '/performance', label: 'Performance', roles: ['ADMIN', 'HOD', 'FACULTY'] },
   { to: '/reports', label: 'Reports', roles: ['ADMIN', 'HOD', 'FACULTY'] },
   { to: '/profile', label: 'Profile', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },

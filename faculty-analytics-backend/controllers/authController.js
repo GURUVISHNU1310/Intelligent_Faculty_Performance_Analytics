@@ -42,17 +42,17 @@ const registerUser = async (req, res) => {
 
     let loginUsername = username && username.trim() ? username.trim() : null;
 
-    if (chosenRole === 'FACULTY') {
+    if (chosenRole === 'FACULTY' || chosenRole === 'HOD') {
       const email = (facultyEmail || username || '').toString().trim().toLowerCase();
       if (!email) {
-        return res.status(400).json({ message: 'Faculty email is required. Use the email your admin added for you.' });
+        return res.status(400).json({ message: 'Email is required. Use the email your admin added for you.' });
       }
       const facultyRecord = await Faculty.findOne({ email });
       if (!facultyRecord) {
-        return res.status(400).json({ message: 'No faculty record found with this email. Ask admin to add you as faculty first.' });
+        return res.status(400).json({ message: 'No faculty record found with this email. Ask admin to add you first.' });
       }
       if (facultyRecord.userId) {
-        return res.status(400).json({ message: 'This faculty email is already registered. Sign in or use another email.' });
+        return res.status(400).json({ message: 'This email is already registered. Sign in or use another email.' });
       }
       loginUsername = email;
       const existingUser = await User.findOne({ username: loginUsername });
@@ -62,7 +62,7 @@ const registerUser = async (req, res) => {
       const user = await User.create({
         username: loginUsername,
         password,
-        role: 'FACULTY',
+        role: chosenRole,
       });
       facultyRecord.userId = user._id;
       await facultyRecord.save();

@@ -8,6 +8,10 @@ export async function fetchFacultyById(id) {
   return apiRequest(`/faculty/${id}`);
 }
 
+export async function fetchMyFaculty() {
+  return apiRequest('/faculty/me');
+}
+
 export async function addFaculty(body) {
   return apiRequest('/faculty', {
     method: 'POST',

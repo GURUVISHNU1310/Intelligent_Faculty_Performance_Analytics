@@ -4,6 +4,7 @@ const {
   addFaculty,
   getAllFaculty,
   getFacultyById,
+  getMyFaculty,
   updateFaculty,
   deleteFaculty,
 } = require('../controllers/facultyController');
@@ -12,6 +13,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 
 router.use(authMiddleware);
 router.get('/', getAllFaculty);
+router.get('/me', getMyFaculty);
 router.get('/:id', getFacultyById);
 router.post('/', roleMiddleware('ADMIN', 'HOD'), addFaculty);
 router.put('/:id', roleMiddleware('ADMIN', 'HOD'), updateFaculty);

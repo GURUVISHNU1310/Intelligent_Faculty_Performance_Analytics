@@ -10,7 +10,7 @@ export async function login(username, password) {
 
 export async function register(username, password, role = 'FACULTY', email = null) {
   const body = { username, password, role };
-  if (role === 'FACULTY' && email) body.email = email;
+  if ((role === 'FACULTY' || role === 'HOD') && email) body.email = email;
   const data = await apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify(body),
