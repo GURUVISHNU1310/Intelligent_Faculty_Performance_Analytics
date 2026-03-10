@@ -5,17 +5,17 @@
 }
 
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: #334155;
-  --accent: #38bdf8;
-  --accent-dim: #0ea5e9;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --accent: #16a34a;
+  --accent-dim: #15803d;
+  --text: #0f172a;
+  --text-muted: #475569;
   --success: #22c55e;
   --warning: #eab308;
   --danger: #ef4444;
-  --border: #475569;
+  --border: #e2e8f0;
 }
 
 body {
@@ -75,7 +75,7 @@ button {
 
 .btn-primary {
   background: var(--accent);
-  color: var(--bg-primary);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
@@ -153,7 +153,7 @@ th {
 }
 
 tr:hover td {
-  background: rgba(56, 189, 248, 0.05);
+  background: rgba(22, 163, 74, 0.06);
 }
 
 .error-msg {

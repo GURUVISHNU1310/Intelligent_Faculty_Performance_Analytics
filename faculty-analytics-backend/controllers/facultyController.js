@@ -36,13 +36,18 @@ const getAllFaculty = async (req, res) => {
           .json({ message: 'HOD profile not found. Cannot determine department.' });
       }
       filter.department = hodFaculty.department;
+    } else if (req.user.role === 'FACULTY') {
+      // A faculty user should only ever see their own record in list view
+      filter.userId = req.user._id;
     }
 
-    // Exclude HODs themselves from the faculty list
-    const hodUsers = await User.find({ role: 'HOD' }).select('_id');
-    if (hodUsers.length > 0) {
-      const hodUserIds = hodUsers.map((u) => u._id);
-      filter.userId = { $nin: hodUserIds };
+    // For non-faculty users (e.g. ADMIN), exclude HODs from the list
+    if (req.user.role !== 'FACULTY') {
+      const hodUsers = await User.find({ role: 'HOD' }).select('_id');
+      if (hodUsers.length > 0) {
+        const hodUserIds = hodUsers.map((u) => u._id);
+        filter.userId = { ...(filter.userId || {}), $nin: hodUserIds };
+      }
     }
 
     const faculty = await Faculty.find(filter).sort({ createdAt: -1 });
