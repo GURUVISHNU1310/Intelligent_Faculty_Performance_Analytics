@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = 'https://intelligent-faculty-performance-analytics.onrender.com';
 
 function getToken() {
   return localStorage.getItem('token');
@@ -6,22 +6,25 @@ function getToken() {
 
 export async function apiRequest(endpoint, options = {}) {
   const token = getToken();
+
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   let res;
+
   try {
-    res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
   } catch (fetchErr) {
-    const msg = fetchErr.message || 'Network error';
-    throw new Error(
-      msg.includes('fetch') || msg.includes('NetworkError')
-        ? 'Cannot reach server. Make sure the backend is running on http://localhost:5000'
-        : msg
-    );
+    throw new Error('Cannot reach backend server');
   }
 
   const data = await res.json().catch(() => ({}));
@@ -32,5 +35,6 @@ export async function apiRequest(endpoint, options = {}) {
     err.data = data;
     throw err;
   }
+
   return data;
 }
