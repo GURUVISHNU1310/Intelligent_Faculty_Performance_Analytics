@@ -1,4 +1,4 @@
-const API_BASE = 'https://intelligent-faculty-performance-analytics.onrender.com';
+const API_BASE = 'https://intelligent-faculty-performance-analytics.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('token');
