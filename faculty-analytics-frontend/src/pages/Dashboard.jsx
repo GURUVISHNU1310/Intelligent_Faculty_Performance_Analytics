@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchFaculty } from '../services/facultyService';
 import { getAllReports } from '../services/performanceService';
@@ -16,8 +16,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  if (user?.role === 'STUDENT') {
+    if (user?.role === 'STUDENT') {
     return <StudentDashboard />;
+  }
+  if (user?.role === 'FACULTY') {
+    return <Navigate to="/my-performance" replace />;
   }
 
   const loadData = () => {

@@ -12,6 +12,7 @@ import EditFaculty from './pages/EditFaculty';
 import FacultyPerformance from './pages/FacultyPerformance';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import MyPerformance from './pages/MyPerformance';
 
 function Layout({ children }) {
   return (
@@ -42,7 +43,9 @@ export default function App() {
         path="/faculty"
         element={
           <ProtectedRoute>
-            <Layout><FacultyList /></Layout>
+            <RoleRoute allowedRoles={['ADMIN', 'HOD']}>
+              <Layout><FacultyList /></Layout>
+            </RoleRoute>
           </ProtectedRoute>
         }
       />
@@ -75,10 +78,22 @@ export default function App() {
         }
       />
       <Route
+        path="/my-performance"
+        element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={['FACULTY']}>
+              <Layout><MyPerformance /></Layout>
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/performance"
         element={
           <ProtectedRoute>
-            <Layout><FacultyPerformance /> </Layout>
+            <RoleRoute allowedRoles={['ADMIN', 'HOD']}>
+              <Layout><FacultyPerformance /> </Layout>
+            </RoleRoute>
           </ProtectedRoute>
         }
       />

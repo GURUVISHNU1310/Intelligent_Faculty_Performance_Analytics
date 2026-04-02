@@ -1,31 +1,41 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Admin & HOD: full. Faculty: view faculty/performance. Student: own dashboard + profile only (give feedback on dashboard).
-const allLinks = [
-  { to: '/', label: 'Dashboard', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
-  { to: '/faculty', label: 'Faculty List', roles: ['ADMIN', 'HOD', 'FACULTY'] },
-  { to: '/faculty/add', label: 'Add Faculty', roles: [ 'HOD'] },
-  { to: '/performance', label: 'Performance', roles: ['ADMIN', 'HOD', 'FACULTY'] },
+const baseLinks = [
+  { to: '/', label: 'Dashboard', roles: ['ADMIN', 'HOD', 'STUDENT'], end: true },
+  { to: '/faculty', label: 'Faculty List', roles: ['ADMIN', 'HOD'], end: true },
+  { to: '/faculty/add', label: 'Add Faculty', roles: ['HOD'] },
+  { to: '/performance', label: 'Performance', roles: ['ADMIN', 'HOD'] },
   { to: '/reports', label: 'Reports', roles: ['ADMIN', 'HOD', 'FACULTY'] },
   { to: '/profile', label: 'Profile', roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
 ];
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const location = useLocation();
   const role = user?.role || '';
-  const links = allLinks.filter((link) => link.roles.includes(role));
+  const isMyPerformanceActive =
+    role === 'FACULTY' && (location.pathname === '/my-performance' || location.pathname.startsWith('/faculty/performance/'));
+
+  const dynamicLinks =
+    role === 'FACULTY'
+      ? [{ to: '/my-performance', label: 'Dashboard', roles: ['FACULTY'], forceActive: isMyPerformanceActive }]
+      : [];
+
+  const links = [...baseLinks, ...dynamicLinks].filter((link) => link.roles.includes(role));
   
   return (
     <aside style={styles.aside}>
       <ul style={styles.ul}>
-        {links.map(({ to, label }) => (
+        {links.map(({ to, label, end, forceActive }) => (
           <li key={to}>
             <NavLink
               to={to}
+              end={end}
               style={({ isActive }) => ({
                 ...styles.link,
-                ...(isActive ? styles.linkActive : {}),
+                ...((forceActive ?? false) || isActive ? styles.linkActive : {}),
               })}
             >
               {label}
